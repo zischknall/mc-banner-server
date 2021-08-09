@@ -46,7 +46,8 @@ type status struct {
 
 func minecraftHandler(c *fiber.Ctx) error {
 	var s status
-	err := pingServer(c.Params("server"), &s)
+	address := parseAddress(c.Params("server"))
+	err := pingServer(address, &s)
 	if err != nil {
 		return err
 	}
@@ -62,6 +63,14 @@ func minecraftHandler(c *fiber.Ctx) error {
 	return banner.EncodePNG(c.Response().BodyWriter())
 }
 
+func parseAddress(in string) string {
+	if strings.Contains(in, ":") {
+		return in
+	}
+
+	return fmt.Sprintf("%s:25565", in)
+}
+
 func generateBanner(favicon image.Image, s *status) *gg.Context {
 	dc := gg.NewContext(width, height)
 	dc.SetRGB(0, 0, 0)
@@ -71,11 +80,25 @@ func generateBanner(favicon image.Image, s *status) *gg.Context {
 	drawStringsToContext(dc, s.Description.ClearString())
 	drawStringsToContext(dc, s.Version.Name)
 	drawStringsToContext(dc, fmt.Sprintf("%d/%d", s.Players.Online, s.Players.Max))
+	lines = 0.0
 
 	return dc
 }
 
+func generatePlaceholderFavicon() image.Image {
+	favicon := gg.NewContext(height, height)
+	favicon.SetRGB(1, 1, 1)
+	favicon.Clear()
+	favicon.SetRGB(0, 0, 0)
+	favicon.DrawStringAnchored("?", float64(height/2), float64(height)/2, 0.5, 0.5)
+	return favicon.Image()
+}
+
 func getFavicon(s *status) (image.Image, error) {
+	if len(s.Favicon) == 0 {
+		return generatePlaceholderFavicon(), nil
+	}
+
 	faviconString := strings.Split(s.Favicon, ",")[1]
 	faviconData, err := base64.StdEncoding.DecodeString(faviconString)
 	if err != nil {
