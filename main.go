@@ -19,14 +19,10 @@ import (
 
 var height = 64
 var width = height * 5
-var lines = 1.0
+var lines = 0.0
 
 func main() {
 	app := fiber.New()
-
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
 
 	app.Get("/minecraft/:server", minecraftHandler)
 
@@ -119,9 +115,10 @@ func pingServer(address string, result *status) error {
 }
 
 func drawStringsToContext(dc *gg.Context, s string) {
+	var linespacing = float64(height) / 4
 	for _, n := range strings.Split(s, "\n") {
 		n = strings.TrimSpace(n)
-		dc.DrawStringAnchored(n, float64((width/2)+(height/2)), dc.FontHeight()*lines, 0.5, 0.5)
+		dc.DrawStringAnchored(n, float64((width/2)+(height/2)), 4+linespacing*lines, 0.5, 0.5)
 		lines += 1
 	}
 }
